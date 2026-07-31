@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudDocs — File Manager</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1e2533;
+    }
+    .navbar {
+      background: #0f2b5b;
+      color: white;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .navbar h1 { font-size: 20px; font-weight: 700; }
+    .navbar span { font-size: 12px; opacity: 0.7; }
+    .container { max-width: 900px; margin: 32px auto; padding: 0 20px; }
+    .flash {
+      background: #ecfdf5;
+      border-left: 4px solid #10b981;
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: #064e3b;
+    }
+    .upload-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+      border: 2px dashed #93c5fd;
+    }
+    .upload-card h2 {
+      font-size: 16px;
+      color: #0f2b5b;
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+    label { font-size: 13px; color: #475569; display: block; margin-bottom: 5px; }
+    input[type=file], input[type=text] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 14px;
+      margin-bottom: 14px;
+      font-family: inherit;
+    }
+    .btn-upload {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-upload:hover { background: #1d4ed8; }
+    .files-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+    .files-card h2 {
+      font-size: 16px;
+      color: #0f2b5b;
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead tr { background: #0f2b5b; color: white; }
+    thead th { padding: 10px 14px; text-align: left; font-weight: 600; }
+    tbody td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #374151; }
+    tbody tr:hover td { background: #f8fafc; }
+    .btn-del {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+    }
+    .btn-del:hover { background: #fee2e2; }
+    .empty { text-align: center; padding: 32px; color: #94a3b8; font-size: 14px; }
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #94a3b8;
+      font-size: 12px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="navbar">
+  <h1>☁️ CloudDocs</h1>
+  <span>AWS EC2 • S3 • RDS MySQL</span>
+</div>
+
+<div class="container">
+
+  {% for msg in get_flashed_messages() %}
+    <div class="flash">{{ msg }}</div>
+  {% endfor %}
+
+  <div class="upload-card">
+    <h2>⇧ Upload a File</h2>
+    <form method="POST" action="/upload" enctype="multipart/form-data">
+      <label>Choose file to upload:</label>
+      <input type="file" name="file" required>
+      <label>Description (optional):</label>
+      <input type="text" name="description"
+             placeholder="e.g. Assignment notes, project report...">
+      <button type="submit" class="btn-upload">⇧ Upload File</button>
+    </form>
+  </div>
+
+  <div class="files-card">
+    <h2>📁 Uploaded Files
+      <span style="font-weight:400; color:#94a3b8; font-size:13px">
+        ({{ files|length }} total)
+      </span>
+    </h2>
+
+    {% if files %}
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Filename</th>
+          <th>Description</th>
+          <th>Uploaded</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in files %}
+        <tr>
+          <td>{{ f.id }}</td>
+          <td>{{ f.filename }}</td>
+          <td>{{ f.description or '—' }}</td>
+          <td>
+            {{ f.upload_date.strftime('%d %b %Y, %H:%M')
+               if f.upload_date else '—' }}
+          </td>
+          <td>
+            <form method="POST"
+                  action="/delete/{{ f.id }}"
+                  style="display:inline">
+              <button class="btn-del"
+                onclick="return confirm(
+                  'Delete {{ f.filename }}? This cannot be undone.'
+                )">
+                🗑 Delete
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">
+      📁 No files uploaded yet. Use the form above to upload your first file!
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<footer>
+  CloudDocs • Deployed on AWS EC2 •
+  Storage: Amazon S3 • Database: Amazon RDS MySQL
+</footer>
+
+</body>
+</html>
